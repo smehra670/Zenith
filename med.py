@@ -15,15 +15,11 @@ import json
 from PIL import Image
 import io
 
-# -----------------------------------------------------------------------------
-# App & Session
-# -----------------------------------------------------------------------------
+
 app = Flask(__name__)
 
-# Use any long random string in production; needed for session score
 app.secret_key = "dev-secret-change-me-123"
 
-# ---- Simple user store (JSON file) -----------------------------------------
 USERS_PATH = pathlib.Path("users.json")
 
 USERS_PATH = pathlib.Path("users.json")
@@ -47,11 +43,9 @@ def _load_users():
 
         data = json.loads(raw)
 
-        # Already the correct shape
         if isinstance(data, dict):
             return data
 
-        # Migrate legacy list -> dict
         if isinstance(data, list):
             migrated = {}
             for item in data:
@@ -67,7 +61,6 @@ def _load_users():
                 }
             return migrated
 
-        # Anything else -> fresh dict
         return {}
     except Exception as e:
         print(f"[users] Failed to read/parse users.json: {e}")
@@ -96,21 +89,18 @@ def login_required(view):
         return view(*args, **kwargs)
     return wrapped
 
-# Configure upload settings
+
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  
 
-# Create upload directory if it doesn't exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Initialize Spotify client once
+
 sp = create_spotify_client()
 
-# -----------------------------------------------------------------------------
-# Helpers
-# -----------------------------------------------------------------------------
+
 def allowed_file(filename: str) -> bool:
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
@@ -173,10 +163,7 @@ def extract_text(resp):
     m = re.findall(r"Message\\(role='assistant', content='([^']*(?:\\\\'[^']*)*)'", str(resp))
     return (m[-1].replace("\\n", "\n").replace("\\'", "'") if m else str(resp))
 
-# -----------------------------------------------------------------------------
-# Shared CSS (updated with modern auth styles)
-# -----------------------------------------------------------------------------
-# Replace the MODERN_CSS variable with this updated version:
+
 
 MODERN_CSS = """
 <style>
@@ -1050,10 +1037,7 @@ MODERN_CSS = """
 
 </style>
 """
-# -----------------------------------------------------------------------------
-# Authentication Routes
-# -----------------------------------------------------------------------------
-# Replace the existing login route with this enhanced version:
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -1061,7 +1045,7 @@ def login():
         username = request.form["username"]
         password = request.form["password"]
         
-        # Simple hardcoded check - no external users dictionary needed
+    
         if (username == "admin" and password == "admin") or \
            (username == "demo" and password == "demo") or \
            (username == "test" and password == "test"):
@@ -1069,7 +1053,7 @@ def login():
             return redirect(url_for("home"))
         else:
             error = "Invalid username or password"
-            # Return the login page with error
+      
             return render_template_string("""
 <!doctype html><html><head>
     <title>🔐 Login - Zenith</title>
@@ -1149,7 +1133,6 @@ def login():
 </body></html>
             """, css=MODERN_CSS, error=error)
     
-    # GET request - show login form
     return render_template_string("""
 <!doctype html><html><head>
     <title>🔐 Login - Zenith</title>
@@ -1242,7 +1225,7 @@ def signup():
             if username in users:
                 error = "Username already exists. Please choose another."
             else:
-                # Create new user
+               
                 users[username] = {
                     "password_hash": generate_password_hash(password)
                 }
@@ -1250,7 +1233,7 @@ def signup():
                 session["user"] = username
                 return redirect(url_for("home"))
         
-        # Re-render signup with error
+      
         html = """
 <!doctype html><html><head>
     <title>📝 Sign Up - Zenith</title>
@@ -1286,7 +1269,7 @@ def signup():
         """
         return render_template_string(html, css=MODERN_CSS, error=error)
     
-    # GET request - show signup form
+    
     html = """
 <!doctype html><html><head>
     <title>📝 Sign Up - Zenith</title>
@@ -1319,10 +1302,7 @@ def signup():
     return render_template_string(html, css=MODERN_CSS)
 
 
-# -----------------------------------------------------------------------------
-# Main Routes (Updated with Auth Integration)
-# -----------------------------------------------------------------------------
-# Replace the existing @app.route("/") function with this:
+
 @app.route("/logout")
 def logout():
     """Log out the current user by clearing their session"""
@@ -1778,11 +1758,9 @@ def home():
     """
     return render_template_string(html, css=MODERN_CSS, user=user)
 
-# All the other routes remain the same, but you can add @login_required decorator to protect them
-# For example, to make certain features require login:
 
 @app.route("/music", methods=["GET", "POST"])
-@login_required  # Require login for music feature
+@login_required  
 def music():
     songs, error, selected = [], None, "happy"
     if request.method == "POST":
@@ -1852,7 +1830,7 @@ def music():
 
 
 @app.route("/workout", methods=["GET", "POST"])
-@login_required  # Require login for workout feature
+@login_required 
 def workout_page():
     plan, error = None, None
     selected_mood, selected_difficulty, selected_option, selected_time = "energized", "beginner", "cardio", 30
@@ -1960,7 +1938,7 @@ def workout_page():
 
 
 @app.route("/posture", methods=["GET", "POST"])
-@login_required  # Require login for posture feature
+@login_required  
 def posture_coach():
     feedback_text, data, error = None, None, None
     uploaded_files = []
@@ -1970,14 +1948,14 @@ def posture_coach():
     if request.method == "POST":
         selected_exercise = request.form.get("exercise", "").strip() or None
 
-        # Handle file upload
+    
         files = []
         if 'image' in request.files:
             file = request.files['image']
             if file and file.filename and file.filename != '':
                 files = [file]
 
-        # Validate files
+ 
         valid_files = []
         for f in files:
             if f and f.filename and f.filename != '' and allowed_file(f.filename):
@@ -1994,21 +1972,20 @@ def posture_coach():
                     f.save(save_path)
                     uploaded_files.append(fname)
 
-                    # Validate and convert the image
+                    
                     success, b64_data, mime_type, error_msg = validate_and_convert_image(save_path)
 
                     if not success:
                         error = f"❌ Image processing failed: {error_msg}"
                         break
 
-                    # Create properly formatted payload
                     image_payload = create_anthropic_image_payload(b64_data, mime_type)
                     images_payload.append(image_payload)
 
                 if not images_payload and not error:
                     error = "🚫 No valid images could be processed."
                 elif images_payload:
-                    # Create prompt for the agent
+                 
                     exercise_context = (
                         f"Exercise being performed: {selected_exercise}. "
                         if selected_exercise else
@@ -2023,11 +2000,10 @@ def posture_coach():
                         "Return valid JSON only - no markdown formatting or extra text."
                     )
 
-                    # Call the agent with properly formatted images
                     try:
                         resp = posture_agent.run(prompt, images=images_payload)
                     except Exception:
-                        # Fallback: try with message format
+                  
                         message_content = [{"type": "text", "text": prompt}]
                         message_content.extend(images_payload)
                         resp = posture_agent.run(message_content)
@@ -2035,9 +2011,9 @@ def posture_coach():
                     text = extract_text(resp).strip()
                     feedback_text = text
 
-                    # Try to parse JSON
+                 
                     try:
-                        # Clean up the response if it has markdown formatting
+                        
                         if text.startswith('```json'):
                             text = text.replace('```json', '').replace('```', '').strip()
                         elif text.startswith('```'):
@@ -2045,12 +2021,12 @@ def posture_coach():
 
                         data = json.loads(text)
 
-                        # Generate correct form image if we have valid analysis data
+                   
                         if data and data.get('exercise'):
                             correct_form_image_url = generate_correct_form_image(selected_exercise, data)
 
                     except json.JSONDecodeError:
-                        # If JSON parsing fails, still show the raw feedback
+             
                         error = "🔧 Analysis completed but response format issue. Raw feedback available below."
 
             except Exception as e:
@@ -2318,9 +2294,9 @@ def wellbeing():
 
 
 @app.route("/daily", methods=["GET", "POST"])
-@login_required  # Require login for daily task feature
+@login_required  
 def daily_task():
-    # Init session values
+   
     if "score" not in session:
         session["score"] = 0
     if "current_task" not in session:
@@ -2342,7 +2318,6 @@ def daily_task():
             resp = daily.run(prompt)
             task = extract_text(resp).strip()
 
-            # Remove any hidden <think> sections if they sneak in
             import re
             task = re.sub(r"<think>.*?</think>", "", task, flags=re.DOTALL).strip()
 
@@ -2420,15 +2395,15 @@ def daily_task():
 
 
 @app.route("/diet", methods=["GET", "POST"])
-@login_required  # Require login for diet feature
+@login_required 
 def diet_page():
     plan_html, error = None, None
-    goal = "cutting"   # default
+    goal = "cutting"  
 
     if request.method == "POST":
         goal = request.form.get("goal", "cutting").strip().lower()
         calories = request.form.get("calories", "").strip()
-        prefs = request.form.get("prefs", "").strip()  # allergies/preferences
+        prefs = request.form.get("prefs", "").strip()  
 
         try:
             prompt = (
@@ -2446,7 +2421,7 @@ def diet_page():
 
             resp = diet.run(prompt)
             text = extract_text(resp)
-            # light tidy to make headings bold and line breaks preserved
+          
             plan_html = (
                 text.replace("Day 1", "<b>Day 1</b>")
                     .replace("Day 2", "<b>Day 2</b>")
@@ -2514,9 +2489,7 @@ def diet_page():
     return render_template_string(html, css=MODERN_CSS, plan_html=plan_html, error=error, goal=goal)
 
 
-# -----------------------------------------------------------------------------
-# Utility Routes
-# -----------------------------------------------------------------------------
+
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
@@ -2552,9 +2525,7 @@ def debug():
     return render_template_string(html, css=MODERN_CSS, working=bool(sp))
 
 
-# -----------------------------------------------------------------------------
-# Helper Functions for Workout Formatting
-# -----------------------------------------------------------------------------
+
 def format_workout_to_html(raw_text: str) -> str:
     """Format workout text into HTML sections"""
     if not raw_text:
@@ -2605,28 +2576,28 @@ def format_workout_to_html(raw_text: str) -> str:
     return "\n".join(html)
 
 
-# Enhanced workout route with better formatting
+
 @app.route("/workout-v2", methods=["GET", "POST"])
 @login_required
 def workout_page_v2():
     plan_html, error = None, None
 
-    # Defaults
+
     form_values = {
         "mood": "",
-        "difficulty": "medium",      # easy | medium | hard
+        "difficulty": "medium",      
         "time": "30",
-        "options": ["cardio"]        # default checked
+        "options": ["cardio"]        
     }
 
     if request.method == "POST":
         mood = request.form.get("mood", "").strip()
         difficulty = request.form.get("difficulty", "medium").strip()
         time_val = request.form.get("time", "30").strip()
-        options_list = request.form.getlist("option")  # multiple checkboxes
+        options_list = request.form.getlist("option") 
         option_str = ", ".join(options_list) if options_list else ""
 
-        # keep user inputs in the form
+        
         form_values = {
             "mood": mood,
             "difficulty": difficulty,
@@ -2718,3 +2689,4 @@ if __name__ == "__main__":
     print("✅ Daily Task: http://127.0.0.1:5000/daily (login required)")
     print("🥗 Diet: http://127.0.0.1:5000/diet (login required)")
     app.run(debug=True, port=5000)
+
