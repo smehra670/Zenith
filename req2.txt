@@ -1,7 +1,9 @@
-Flask
-spotipy
-openai
-pillow
-python-dotenv
+flask
 werkzeug
+spotipy
+python-dotenv
+openai
+agno
+groq
+pillow
 requests
