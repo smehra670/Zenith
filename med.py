@@ -2332,29 +2332,36 @@ def daily_task():
         action = request.form.get("action")
 
         if action == "new":
-            # Ask the 'daily' agent for a single easy task
             prompt = (
                 "Give ONE short actionable task (<= 15 words) that can be done at home "
-                "in under 5 minutes. Difficulty about the same as 20 push-ups, "
-                "but vary types (movement, breathing, stretch, tidy, hydration, sunlight, quick learning). "
-                "Output only the task text."
+                "in under 5 minutes. Difficulty about the same as 20 push-ups. "
+                "Vary types (movement, breathing, stretch, tidy, hydration, sunlight, learning). "
+                "Output ONLY the task text. No explanations. No reasoning. "
+                "Do NOT include <think> or any hidden thoughts."
             )
             resp = daily.run(prompt)
             task = extract_text(resp).strip()
+
+            # Remove any hidden <think> sections if they sneak in
+            import re
+            task = re.sub(r"<think>.*?</think>", "", task, flags=re.DOTALL).strip()
+
             session["current_task"] = task
             msg = "🆕 New task generated!"
+
         elif action == "done":
-            # Mark done → +1 score, clear current task
             if session.get("current_task"):
                 session["score"] = int(session["score"]) + 1
                 session["current_task"] = ""
                 msg = "✅ Great job! +1 point added."
             else:
                 msg = "ℹ️ No active task to complete."
+
         elif action == "reset":
             session["score"] = 0
             session["current_task"] = ""
             msg = "🔄 Score and task reset."
+
 
     html = """
 <!doctype html><html><head>
@@ -2699,11 +2706,6 @@ def workout_page_v2():
     </div></body></html>
     """
     return render_template_string(html, css=MODERN_CSS, plan_html=plan_html, error=error, form_values=form_values)
-
-
-# -----------------------------------------------------------------------------
-# Run the Application
-# -----------------------------------------------------------------------------
 if __name__ == "__main__":
     print("✨ Zenith Wellness Platform Starting...")
     print("🏠 Home: http://127.0.0.1:5000")
