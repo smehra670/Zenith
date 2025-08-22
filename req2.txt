@@ -1,0 +1,7 @@
+Flask
+spotipy
+openai
+pillow
+python-dotenv
+werkzeug
+requests
