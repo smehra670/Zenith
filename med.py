@@ -1654,7 +1654,7 @@ def home():
                 ✨ AI Wellness Companion
             </div>
             <h1>Feel better, move smarter, and soundtrack your day.</h1>
-            <p>Techy, neon-glass interface with fast flows for music, workouts, posture analysis, wellbeing check-ins, and a 7-day diet planner.</p>
+            <p>Fast flows for music, workouts, posture analysis, wellbeing check-ins, and a 7-day diet planner.</p>
         </div>
 
         <div class="feature-grid">
@@ -2689,4 +2689,5 @@ if __name__ == "__main__":
     print("✅ Daily Task: http://127.0.0.1:5000/daily (login required)")
     print("🥗 Diet: http://127.0.0.1:5000/diet (login required)")
     app.run(debug=True, port=5000)
+
 
